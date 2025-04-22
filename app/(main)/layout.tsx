@@ -1,6 +1,6 @@
 // app/(main)/layout.tsx
-import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import HeaderWrapper from "@/components/HeaderWrapper";
 
 export default function MainLayout({
   children,
@@ -9,7 +9,7 @@ export default function MainLayout({
 }>) {
   return (
     <>
-      <Header />
+      <HeaderWrapper />
       {children}
       <Footer />
     </>

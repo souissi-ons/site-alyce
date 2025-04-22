@@ -4,7 +4,6 @@ import Categories from "./components/catégories";
 import CatalogueArticles from "./components/catalogueArticles";
 
 const Home = async () => {
-  // Appel sans paramètres de pagination/recherche
   const { data, total } = await fetchProducts();
 
   return (

@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, LogIn } from "lucide-react";
+import { Search, ShoppingCart, LogIn, LogOut } from "lucide-react";
 
-export function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // À remplacer par votre état d'authentification réel
+interface HeaderProps {
+  initialAuthState: boolean;
+}
+
+export function Header({ initialAuthState }: HeaderProps) {
   const router = useRouter();
 
-  const handleAuthAction = () => {
-    if (isLoggedIn) {
-      router.push("/Profil");
+  const handleAuthAction = async () => {
+    if (initialAuthState) {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+        document.cookie =
+          "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        router.push("/");
+        router.refresh();
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
     } else {
       router.push("/login");
     }
@@ -42,7 +52,7 @@ export function Header() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-6">
-            {/* Search - Always visible */}
+            {/* Search */}
             <button
               className="text-primaryDark hover:text-primaryDark/70 transition-colors"
               aria-label="Search"
@@ -50,28 +60,35 @@ export function Header() {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Cart - Always visible */}
-            <Link
-              href="/Panier"
-              className="text-primaryDark hover:text-primaryDark/70 transition-colors"
-              aria-label="Cart"
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </Link>
+            {/* Auth Button */}
+            {initialAuthState ? (
+              <>
+                {/* Cart */}
+                <Link
+                  href="/shopping-cart"
+                  className="text-primaryDark hover:text-primaryDark/70 transition-colors"
+                  aria-label="Cart"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </Link>
 
-            {/* Auth Button - Different on mobile and desktop */}
-            {isLoggedIn ? (
-              // Profil (tous écrans)
-              <button
-                onClick={handleAuthAction}
-                className="text-primaryDark hover:text-primaryDark/70 transition-colors"
-                aria-label="Profile"
-              >
-                <User className="w-5 h-5" />
-              </button>
+                <button
+                  onClick={handleAuthAction}
+                  className="hidden md:block bg-tertiaryLight text-white px-4 py-2 rounded-full hover:bg-primaryDark transition-colors text-sm"
+                  aria-label="Se Déconnecter"
+                >
+                  Déconnecter
+                </button>
+                <button
+                  onClick={handleAuthAction}
+                  className="md:hidden text-primaryDark hover:text-primaryDark/70 transition-colors"
+                  aria-label="Se Déconnecter"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </>
             ) : (
               <>
-                {/* Desktop - Bouton texte */}
                 <button
                   onClick={handleAuthAction}
                   className="hidden md:block bg-tertiaryLight text-white px-4 py-2 rounded-full hover:bg-primaryDark transition-colors text-sm"
@@ -79,8 +96,6 @@ export function Header() {
                 >
                   Se Connecter
                 </button>
-
-                {/* Mobile - Icône */}
                 <button
                   onClick={handleAuthAction}
                   className="md:hidden text-primaryDark hover:text-primaryDark/70 transition-colors"

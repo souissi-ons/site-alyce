@@ -9,11 +9,11 @@ export const axiosClient = async (): Promise<AxiosInstance> => {
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
     withCredentials: true,
   });
-  //   if (token) {
-  //     instance.interceptors.request.use((config) => {
-  //       config.headers["Cookie"] = `access_token=${token}`;
-  //       return config;
-  //     });
-  //   }
+  if (token) {
+    instance.interceptors.request.use((config) => {
+      config.headers["Cookie"] = `access_token=${token}`;
+      return config;
+    });
+  }
   return instance;
 };

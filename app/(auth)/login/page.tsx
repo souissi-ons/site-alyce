@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import { signIn } from "@/actions/auth.actions";
+
 import Image from "next/image";
 import Link from "next/link";
+const initialState = {
+  success: false,
+  message: "",
+  errors: undefined,
+  inputs: undefined,
+};
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login Submitted:", { email, password });
-  };
+  const [state, action, isPending] = useActionState(signIn, initialState);
 
   return (
     <div
@@ -50,7 +52,7 @@ export default function Login() {
             LOGIN
           </h2>
           <hr className="border-t border-black md:border-white w-80 mx-auto mb-6" />
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form action={action} className="space-y-4">
             <div className="relative left-20 top-[-10px]">
               <label className="block text-sm text-black md:text-white mb-1">
                 email:
@@ -58,8 +60,7 @@ export default function Login() {
               <input
                 type="email"
                 className="w-full bg-transparent text-black md:text-white border-none focus:outline-none"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
                 required
               />
               <hr className="border-t border-black md:border-white w-60 mx-0.00000000001 mb-6" />
@@ -69,10 +70,9 @@ export default function Login() {
                 Mot de Passe:
               </label>
               <input
-                type="password"
+                type="text"
                 className="w-full bg-transparent text-black md:text-white border-none focus:outline-none"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
                 required
               />
               <hr className="border-t border-black md:border-white mt-0.5 mb-10 w-60 mx-0" />
@@ -82,10 +82,20 @@ export default function Login() {
             </p>
             <button
               type="submit"
+              disabled={isPending}
               className="w-36 mb-10 mx-auto block py-2 border border-black md:border-white text-black md:text-white rounded-md text-sm hover:bg-black md:hover:bg-white hover:text-white md:hover:text-black transition-colors"
             >
-              Se connecter
+              <span className="">
+                {isPending ? "Connexion..." : "Connecter"}
+              </span>
             </button>
+            {state.message && (
+              <p className="text-red-500 text-center">
+                {typeof state.message === "string"
+                  ? state.message
+                  : "Erreur lors de la connexion"}
+              </p>
+            )}{" "}
             <div className="text-center">
               <p className="text-xs text-black md:text-white">
                 Vous n'avez pas de compte ?{" "}

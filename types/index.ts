@@ -29,3 +29,19 @@ export interface Product {
   product: ProductInfo;
   reviews: Review[];
 }
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  imageURL: string;
+  price: number;
+  stockQuantity: number;
+  quantity: number;
+}
+
+export interface ShoppingCart {
+  _id: string;
+  clientId: string;
+  cartItems: CartItem[];
+  totalPrice: number;
+}
