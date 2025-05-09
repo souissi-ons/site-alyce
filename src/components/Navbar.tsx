@@ -52,22 +52,24 @@ export default async function Navbar() {
               <Search className="w-5 h-5 text-primary-dark" />
             </button>
             {loggedIn ? (
-              <Link href="/profile" aria-label="Account">
-                <User2 className="w-5 h-5 text-primary-dark" />
-              </Link>
+              <>
+                <Link href="/profile" aria-label="Account">
+                  <User2 className="w-5 h-5 text-primary-dark" />
+                </Link>
+                <Link href="/cart" aria-label="Cart" className="relative">
+                  <ShoppingCart className="w-5 h-5 text-primary-dark" />
+                  {
+                    <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {count}
+                    </span>
+                  }
+                </Link>
+              </>
             ) : (
               <Link href="/login" aria-label="Login">
                 <LogIn className="w-5 h-5 text-primary-dark" />
               </Link>
             )}
-            <Link href="/cart" aria-label="Cart" className="relative">
-              <ShoppingCart className="w-5 h-5 text-primary-dark" />
-              {
-                <span className="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {count}
-                </span>
-              }
-            </Link>
           </div>
         </div>
       </div>

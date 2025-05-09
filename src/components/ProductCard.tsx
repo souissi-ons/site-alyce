@@ -4,15 +4,23 @@ import Link from "next/link";
 import { Product } from "@/types/Product";
 import { addToCart } from "@/actions/cart.actions";
 import { Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { isLoggedIn } from "@/actions/auth.actions";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const authenticated = await isLoggedIn();
+    if (!authenticated) {
+      router.push("/login");
+      return;
+    }
     await addToCart({
       productId: product._id,
       name: product.name,

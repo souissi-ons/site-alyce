@@ -12,6 +12,7 @@ export default function ProductsFilter({ categories }: ProductsFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
+  const activePrice = searchParams.get("price");
 
   const handleCategoryChange = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -23,9 +24,22 @@ export default function ProductsFilter({ categories }: ProductsFilterProps) {
     router.push(`/products?${params.toString()}`);
   };
 
-  const clearFilters = () => {
-    router.push("/products");
+  const handlePriceChange = (priceRange: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (priceRange) {
+      params.set("price", priceRange);
+    } else {
+      params.delete("price");
+    }
+    router.push(`/products?${params.toString()}`);
   };
+
+  const clearFilters = () => {
+    const params = new URLSearchParams();
+    router.push(`/products?${params.toString()}`);
+  };
+
+  const hasActiveFilters = activeCategory || activePrice;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-soft border border-secondary-light">
@@ -34,7 +48,7 @@ export default function ProductsFilter({ categories }: ProductsFilterProps) {
           <Filter className="w-5 h-5 mr-2 text-primary" />
           Filters
         </h2>
-        {activeCategory && (
+        {hasActiveFilters && (
           <button
             onClick={clearFilters}
             className="text-sm text-accent hover:text-accent-dark flex items-center transition-colors"
@@ -84,16 +98,36 @@ export default function ProductsFilter({ categories }: ProductsFilterProps) {
             Price Range
           </h3>
           <div className="space-y-2">
-            {["Under 50 DT", "50 - 100 DT", "Over 100 DT"].map(
-              (range, index) => (
-                <button
-                  key={index}
-                  className="w-full text-left px-4 py-2 rounded-lg text-sm text-neutral-dark hover:bg-secondary-light transition-colors"
-                >
-                  {range}
-                </button>
-              )
-            )}
+            <button
+              onClick={() => handlePriceChange("under_50")}
+              className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                activePrice === "under_50"
+                  ? "bg-accent text-white font-medium"
+                  : "text-neutral-dark hover:bg-secondary-light"
+              }`}
+            >
+              Under 50 DT
+            </button>
+            <button
+              onClick={() => handlePriceChange("50_100")}
+              className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                activePrice === "50_100"
+                  ? "bg-accent text-white font-medium"
+                  : "text-neutral-dark hover:bg-secondary-light"
+              }`}
+            >
+              50 - 100 DT
+            </button>
+            <button
+              onClick={() => handlePriceChange("over_100")}
+              className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                activePrice === "over_100"
+                  ? "bg-accent text-white font-medium"
+                  : "text-neutral-dark hover:bg-secondary-light"
+              }`}
+            >
+              Over 100 DT
+            </button>
           </div>
         </div>
       </div>

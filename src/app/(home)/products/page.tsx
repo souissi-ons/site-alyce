@@ -4,21 +4,31 @@ import { Category } from "@/types/Category";
 import axios from "axios";
 import ProductsFilter from "@/components/products/ProductsFilter";
 import ProductGrid from "@/components/products/ProductGrid";
-import { getActiveProducts } from "@/actions/product.actions";
+import {
+  getActiveProducts,
+  getFilteredProducts,
+} from "@/actions/product.actions";
 import { getAllCategories } from "@/actions/category.actions";
 
 interface ProductsPageProps {
   searchParams: {
     category?: string;
-    sort?: string;
     price?: string;
+    sort?: string;
   };
 }
 
 export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
-  const products = await getActiveProducts();
+  const { category, price, sort } = searchParams;
+
+  // Utiliser la fonction de filtrage si des paramètres sont présents
+  const products =
+    category || price || sort
+      ? await getFilteredProducts(category, price, sort)
+      : await getActiveProducts();
+
   const categories = await getAllCategories();
 
   return (
@@ -54,7 +64,42 @@ export default async function ProductsPage({
                 </span>{" "}
                 products
               </p>
-              {/* Sorting would go here */}
+
+              {/* Affichage des filtres actifs */}
+              <div className="flex gap-2">
+                {category && (
+                  <span className="px-2 py-1 bg-secondary-light rounded-md text-sm">
+                    {categories.find((c) => c._id === category)?.name ||
+                      "Category"}
+                  </span>
+                )}
+                {price && (
+                  <span className="px-2 py-1 bg-secondary-light rounded-md text-sm">
+                    {price === "under_50"
+                      ? "Under 50 DT"
+                      : price === "50_100"
+                      ? "50-100 DT"
+                      : price === "over_100"
+                      ? "Over 100 DT"
+                      : price}
+                  </span>
+                )}
+                {sort && (
+                  <span className="px-2 py-1 bg-secondary-light rounded-md text-sm">
+                    {sort === "price_asc"
+                      ? "Price: Low to High"
+                      : sort === "price_desc"
+                      ? "Price: High to Low"
+                      : sort === "rating"
+                      ? "Rating"
+                      : sort === "popularity"
+                      ? "Popularity"
+                      : sort === "newest"
+                      ? "Newest"
+                      : sort}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Product Grid */}

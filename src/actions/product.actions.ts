@@ -53,3 +53,46 @@ export const createClientReview = async (
     throw error;
   }
 };
+
+export const getFilteredProducts = async (
+  categoryId?: string,
+  priceRange?: string,
+  sort?: string
+): Promise<Product[]> => {
+  try {
+    const instance = await axiosClient();
+    const params = new URLSearchParams();
+
+    if (categoryId) {
+      params.append("category", categoryId);
+    }
+
+    // Convertir la plage de prix en paramètres backend
+    if (priceRange) {
+      switch (priceRange) {
+        case "under_50":
+          params.append("priceMax", "50");
+          break;
+        case "50_100":
+          params.append("priceMin", "50");
+          params.append("priceMax", "100");
+          break;
+        case "over_100":
+          params.append("priceMin", "100");
+          break;
+      }
+    }
+
+    if (sort) {
+      params.append("sort", sort);
+    }
+
+    const response = await instance.get<Product[]>(
+      `/product/filter?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching filtered products:", error);
+    throw error;
+  }
+};
