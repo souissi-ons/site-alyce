@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { login } from "@/actions/auth.actions";
+import { initiateGoogleLogin, login } from "@/actions/auth.actions";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function LoginForm() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +29,18 @@ export default function LoginForm() {
       setError("Invalid email or password");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await initiateGoogleLogin();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to initiate Google login");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -120,7 +133,8 @@ export default function LoginForm() {
       </div>
 
       <button
-        // onClick={() => authService.googleLogin()}
+        onClick={handleGoogleLogin}
+        disabled={googleLoading}
         className="w-full py-2.5 px-4 border border-primary-light rounded-full hover:bg-primary-light/10 flex justify-center items-center gap-2 transition-colors"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

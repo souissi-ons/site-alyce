@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const cookieStore = await cookies();
+  console.log("Middleware cookies:", cookieStore.get("access_token"));
   const token = cookieStore.get("access_token")?.value;
   const isLoginUrl =
     req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/register";
