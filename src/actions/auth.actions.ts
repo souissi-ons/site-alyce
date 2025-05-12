@@ -52,29 +52,41 @@ export async function isLoggedIn() {
 export async function handleGoogleCallback(code: string) {
   try {
     const instance = await axiosClient();
-    await instance.get(`/auth/google/redirect`, {
-      params: { code },
-      withCredentials: true,
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    await instance.post(
+      `/auth/google`,
+      { code },
+      {
+        withCredentials: true,
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
 
     // Si nous arrivons ici, c'est que l'authentification a réussi
     // Les cookies seront automatiquement définis par le backend
     return { success: true };
   } catch (error: any) {
-    console.error("Google authentication failed:", error);
     const errorMessage =
       error.response?.data?.message || "Failed to authenticate with Google";
     throw new Error(errorMessage);
   }
 }
 
-export async function initiateGoogleLogin() {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-  // Ajout d'un timestamp pour éviter la mise en cache
-  const timestamp = new Date().getTime();
-  return `${baseUrl}/auth/google/login?_=${timestamp}`;
-}
+export const getGoogleOAuthURL = async () => {
+  const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+  const options = {
+    redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URL,
+    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+    access_type: "offline",
+    response_type: "code",
+    prompt: "consent",
+    scope: [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ].join(" "),
+  };
+
+  const qs = new URLSearchParams(options).toString();
+  return `${rootUrl}?${qs}`;
+};

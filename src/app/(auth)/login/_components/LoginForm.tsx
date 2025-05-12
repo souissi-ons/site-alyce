@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { initiateGoogleLogin, login } from "@/actions/auth.actions";
+import { getGoogleOAuthURL, login } from "@/actions/auth.actions";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -31,17 +31,8 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
-
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      await initiateGoogleLogin();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to initiate Google login");
-    } finally {
-      setGoogleLoading(false);
-    }
+    window.location.href = await getGoogleOAuthURL();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
