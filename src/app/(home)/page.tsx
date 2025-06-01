@@ -4,7 +4,6 @@ import { getActiveProducts } from "@/actions/product.actions";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import HeroSection from "@/components/home/HeroSection";
-import Newsletter from "@/components/home/Newsletter";
 import Testimonials from "@/components/home/Testimonials";
 
 export default async function Home() {
@@ -17,9 +16,7 @@ export default async function Home() {
     <main className="min-h-screen">
       <HeroSection />
       <FeaturedCategories categories={categoriesData} />
-      <FeaturedProducts products={productsData} />
-      <Testimonials />
-      <Newsletter />
+      <FeaturedProducts products={productsData} />{" "}
     </main>
   );
 }

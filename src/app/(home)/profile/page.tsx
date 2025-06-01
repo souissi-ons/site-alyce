@@ -2,11 +2,13 @@
 import ProfileForm from "@/components/profile/ProfileForm";
 import OrdersSection from "@/components/profile/OrdersSection";
 import { getUser } from "@/actions/user.actions";
+import { getUserOrders } from "@/actions/order.actions";
 import { User } from "lucide-react";
 import LogoutButton from "@/components/profile/LogoutButton";
 
 export default async function ProfilePage() {
   const user = await getUser();
+  const orders = await getUserOrders();
 
   return (
     <div className="bg-neutral-light min-h-screen py-16">
@@ -34,7 +36,7 @@ export default async function ProfilePage() {
 
           <div className="grid md:grid-cols-2 gap-8 p-8">
             <ProfileForm user={user} />
-            <OrdersSection orders={user.orders} />
+            <OrdersSection orders={orders} />
           </div>
         </div>
       </div>

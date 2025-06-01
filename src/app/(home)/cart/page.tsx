@@ -6,9 +6,9 @@ import { getCart } from "@/actions/cart.actions";
 export default async function CartPage() {
   const cartData = await getCart();
 
-  const subtotal = cartData?.totalPrice || 0;
-  const shippingEstimate = 15.0;
-  const total = subtotal + shippingEstimate;
+  const subtotal = cartData?.cartItems?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+  const shippingEstimate = 7.0;
+  const total = subtotal +shippingEstimate ;
 
   return (
     <div className="bg-neutral-light min-h-screen py-12">

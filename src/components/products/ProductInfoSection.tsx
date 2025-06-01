@@ -6,6 +6,8 @@ import { Product } from "@/types/Product";
 import { Heart, Share2, ShoppingBag, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCategoryById } from "@/actions/category.actions";
+import { isLoggedIn } from "@/actions/auth.actions";
+import { useRouter } from "next/navigation";
 
 interface ProductInfoSectionProps {
   product: Product;
@@ -28,6 +30,26 @@ export default function ProductInfoSection({
     };
     fetchCategory();
   }, [product.category]);
+
+  const router = useRouter();
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const authenticated = await isLoggedIn();
+    if (!authenticated) {
+      router.push("/login");
+      return;
+    }
+    await addToCart({
+      productId: product._id,
+      name: product.name,
+      imageURL: product.imageUrl,
+      price: product.price,
+      stockQuantity: product.quantity,
+      quantity: 1,
+    });
+  };
 
   const renderRatingStars = (rating: number) => {
     const stars = [];
@@ -151,16 +173,7 @@ export default function ProductInfoSection({
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <button
-          onClick={async () => {
-            await addToCart({
-              productId: product._id,
-              name: product.name,
-              imageURL: product.imageUrl,
-              price: product.price,
-              stockQuantity: product.quantity,
-              quantity: selectedQuantity,
-            });
-          }}
+          onClick={handleAddToCart}
           disabled={!product.isActive}
           className={`flex-1 flex items-center justify-center py-3 px-6 rounded-lg transition-colors ${
             product.isActive

@@ -18,15 +18,6 @@ export default function FeaturedCategories({
           <h2 className="text-3xl font-serif font-bold text-primary-dark">
             Our Fragrance Families
           </h2>
-          <Link
-            href="/categories"
-            className="text-primary-dark hover:text-accent-dark font-medium flex items-center gap-2 transition-colors group"
-          >
-            View All Categories
-            <span className="group-hover:translate-x-1 transition-transform">
-              →
-            </span>
-          </Link>
         </div>
 
         {categories.length === 0 ? (

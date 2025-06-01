@@ -29,7 +29,7 @@ export async function getCartItemsCount() {
 
     const instance = await axiosClient();
     const response = await instance.get<ShoppingCart>("/shopping-cart");
-    return response.data.cartItems.length;
+    return response.data.cartItems?.length || 0;
   } catch (error) {
     console.error("Error fetching cart count:", error);
     return 0;

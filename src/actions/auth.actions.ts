@@ -1,6 +1,7 @@
 "use server";
 import { axiosClient } from "@/utils/axiosUtil";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function login(email: string, password: string) {
   try {
@@ -11,8 +12,7 @@ export async function login(email: string, password: string) {
     });
     return response.data;
   } catch (error) {
-    console.log(error);
-    throw new Error("Login failed");
+    return { data: null, error: "Login failed" };
   }
 }
 
@@ -38,9 +38,30 @@ export async function register(
 }
 
 export async function logout() {
-  const cookiesStore = await cookies();
-  cookiesStore.delete("access_token");
-  cookiesStore.delete("refresh_token");
+  try {
+    // Optionnel : notifier le backend du logout
+    const cookiesStore = await cookies();
+    const accessToken = cookiesStore.get("access_token");
+
+    if (accessToken) {
+      try {
+        const instance = await axiosClient();
+        await instance.post("/auth/logout");
+      } catch (error) {
+        // Ignorer les erreurs du backend lors du logout
+        console.log("Backend logout error (ignored):", error);
+      }
+    }
+
+    // Supprimer les cookies
+    cookiesStore.delete("access_token");
+    cookiesStore.delete("refresh_token");
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+
+  // Redirection forcée vers la page de connexion
+  redirect("/login");
 }
 
 export async function isLoggedIn() {
@@ -86,7 +107,6 @@ export const getGoogleOAuthURL = async () => {
       "https://www.googleapis.com/auth/userinfo.email",
     ].join(" "),
   };
-
-  const qs = new URLSearchParams(options).toString();
+  const qs = new URLSearchParams(options as Record<string, string>).toString();
   return `${rootUrl}?${qs}`;
 };

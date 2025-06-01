@@ -1,5 +1,4 @@
-// src/actions/cart.actions.ts
-"use server";
+// src/actions/product.actions.ts
 
 import { axiosClient } from "@/utils/axiosUtil";
 import { Product } from "@/types/Product";
@@ -30,8 +29,6 @@ export const getProductById = async (id: string): Promise<ProductData> => {
   }
 };
 
-//   createClientReview(@CurrentUser() user : RequestUser, @Query("product_id") productId : string, @Body() createClientReviewDTO : CreateClientReviewDTO){
-
 export const createClientReview = async (
   productId: string,
   rating: number,
@@ -46,10 +43,8 @@ export const createClientReview = async (
         comment,
       }
     );
-    console.log("Client review created:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error creating client review:", error);
     throw error;
   }
 };

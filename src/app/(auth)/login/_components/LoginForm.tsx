@@ -21,15 +21,15 @@ export default function LoginForm() {
     setLoading(true);
     setError("");
 
-    try {
-      await login(formData.email, formData.password);
-      router.push("/profile");
-    } catch (err) {
-      console.error(err);
+    const result = await login(formData.email, formData.password);
+
+    if (result.error) {
       setError("Invalid email or password");
-    } finally {
       setLoading(false);
+      return;
     }
+    router.push("/profile");
+    setLoading(false);
   };
   const handleGoogleLogin = async () => {
     window.location.href = await getGoogleOAuthURL();
@@ -83,12 +83,12 @@ export default function LoginForm() {
             >
               Password
             </label>
-            <Link
+            {/* <Link
               href="/forgot-password"
               className="text-sm text-accent hover:text-accent-dark"
             >
               Forgot password?
-            </Link>
+            </Link> */}
           </div>
           <input
             id="password"

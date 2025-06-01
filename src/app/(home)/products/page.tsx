@@ -6,8 +6,7 @@ import ProductsFilter from "@/components/products/ProductsFilter";
 import ProductGrid from "@/components/products/ProductGrid";
 import {
   getActiveProducts,
-  getFilteredProducts,
-} from "@/actions/product.actions";
+  getFilteredProducts,} from "@/actions/product.actions";
 import { getAllCategories } from "@/actions/category.actions";
 
 interface ProductsPageProps {
@@ -21,7 +20,10 @@ interface ProductsPageProps {
 export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
-  const { category, price, sort } = searchParams;
+  const params = await searchParams;
+  const category = params?.category;
+  const price = params?.price;
+  const sort = params?.sort;
 
   // Utiliser la fonction de filtrage si des paramètres sont présents
   const products =

@@ -1,11 +1,14 @@
 // src/components/products/ReviewSection.tsx
 "use client";
-import { createClientReview } from "@/actions/product.actions";
+// Import the review action - Make sure this points to the correct file
 import { getUserById } from "@/actions/user.actions";
+import { isLoggedIn as checkIsLoggedIn } from "@/actions/auth.actions";
 import { ClientReview } from "@/types/ClientReview";
 import { User } from "@/types/User";
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface ReviewSectionProps {
   reviews: ClientReview[];
@@ -19,27 +22,54 @@ export default function ReviewSection({
   productId,
 }: ReviewSectionProps) {
   const [isWritingReview, setIsWritingReview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newReview, setNewReview] = useState({
     rating: 5,
     comment: "",
   });
   const [users, setUsers] = useState<Record<string, User>>({});
+  const [submitMessage, setSubmitMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUsers = async () => {
       const usersData: Record<string, User> = {};
       for (const review of reviews) {
         if (!usersData[review.userId]) {
-          const user = await getUserById(review.userId);
-          if (user) {
-            usersData[review.userId] = user;
+          try {
+            const user = await getUserById(review.userId);
+            if (user) {
+              usersData[review.userId] = user;
+            }
+          } catch (error) {
+            console.error(`Error fetching user ${review.userId}:`, error);
           }
         }
       }
       setUsers(usersData);
     };
-    fetchUsers();
+
+    if (reviews.length > 0) {
+      fetchUsers();
+    }
   }, [reviews]);
+
+  useEffect(() => {
+    // Vérifie si l'utilisateur est connecté (côté client)
+    (async () => {
+      try {
+        const logged = await checkIsLoggedIn();
+        setIsLoggedIn(logged);
+      } catch {
+        setIsLoggedIn(false);
+      }
+    })();
+  }, []);
 
   const renderRatingStars = (rating: number, size = "w-4 h-4") => {
     const stars = [];
@@ -62,21 +92,97 @@ export default function ReviewSection({
     return stars;
   };
 
+  const validateForm = () => {
+    const trimmedComment = newReview.comment.trim();
+
+    if (!trimmedComment) {
+      setSubmitMessage({
+        type: "error",
+        text: "Please enter a comment for your review.",
+      });
+      return false;
+    }
+
+    if (trimmedComment.length > 500) {
+      setSubmitMessage({
+        type: "error",
+        text: "Comment must be 500 characters or less.",
+      });
+      return false;
+    }
+
+    if (newReview.rating < 1 || newReview.rating > 5) {
+      setSubmitMessage({
+        type: "error",
+        text: "Please select a rating between 1 and 5 stars.",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      console.log({
-        productId,
-        rating: newReview.rating,
-        comment: newReview.comment,
-      });
-      await createClientReview(productId, newReview.rating, newReview.comment);
-    } catch (error) {
-      console.error("Error submitting review:", error);
+    if (!validateForm()) {
+      return;
     }
+
+    setIsSubmitting(true);
+    setSubmitMessage(null);
+
+    try {
+      // Appel direct à ton backend NestJS
+      await axios.post(
+        "http://localhost:5000/client-review?product_id=" + productId,
+        {
+          rating: newReview.rating,
+          comment: newReview.comment.trim(),
+        },
+        {
+          // Ajoute les credentials ou headers d'auth si besoin
+          withCredentials: true,
+        }
+      );
+
+      setSubmitMessage({
+        type: "success",
+        text: "Review submitted successfully! Thank you for your feedback.",
+      });
+
+      setIsWritingReview(false);
+      setNewReview({ rating: 5, comment: "" });
+
+      setTimeout(() => {
+        router.refresh();
+      }, 1500);
+    } catch (error: any) {
+      setSubmitMessage({
+        type: "error",
+        text:
+          error.message || "An error occurred while submitting your review.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelReview = () => {
     setIsWritingReview(false);
     setNewReview({ rating: 5, comment: "" });
+    setSubmitMessage(null);
+  };
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+
+    // Clear error message when user starts typing
+    if (submitMessage?.type === "error") {
+      setSubmitMessage(null);
+    }
+
+    setNewReview({ ...newReview, comment: value });
   };
 
   return (
@@ -84,6 +190,19 @@ export default function ReviewSection({
       <h2 className="text-2xl font-bold text-primary-dark font-serif mb-8">
         Customer Reviews
       </h2>
+
+      {/* Success/Error Messages */}
+      {submitMessage && (
+        <div
+          className={`mb-6 p-4 rounded-lg ${
+            submitMessage.type === "success"
+              ? "bg-green-50 text-green-800 border border-green-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          {submitMessage.text}
+        </div>
+      )}
 
       {reviews.length > 0 ? (
         <>
@@ -108,14 +227,15 @@ export default function ReviewSection({
                 const count = reviews.filter(
                   (r) => Math.floor(r.rating) === star
                 ).length;
-                const percentage = (count / reviews.length) * 100;
+                const percentage =
+                  reviews.length > 0 ? (count / reviews.length) * 100 : 0;
 
                 return (
                   <div key={star} className="flex items-center mb-2">
                     <div className="w-10 text-neutral-dark">{star} star</div>
                     <div className="flex-1 mx-2 h-2 bg-secondary-light rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-accent"
+                        className="h-full bg-accent transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       ></div>
                     </div>
@@ -135,25 +255,30 @@ export default function ReviewSection({
                 key={review._id}
                 className="border-b border-secondary-light pb-6 last:border-0"
               >
-                <div className="flex items-center mb-2">
-                  <div className="flex mr-2">
-                    {renderRatingStars(review.rating)}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <div className="flex mr-2">
+                      {renderRatingStars(review.rating)}
+                    </div>
+                    <span className="text-neutral text-sm">
+                      {new Date(review.createdAt).toLocaleDateString("fr-FR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
-                  <span className="text-neutral text-sm">
-                    {new Date(review.createdAt).toLocaleDateString("fr-FR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
                 </div>
                 <h4 className="font-medium text-primary-dark mb-1">
-                  {users[review.userId]?.firstName +
-                    " " +
-                    users[review.userId]?.lastName ||
-                    `User ${review.userId.substring(0, 4)}`}
+                  {users[review.userId]
+                    ? `${users[review.userId].firstName} ${
+                        users[review.userId].lastName
+                      }`
+                    : `User ${review.userId.substring(0, 4)}`}
                 </h4>
-                <p className="text-neutral-dark">{review.comment}</p>
+                <p className="text-neutral-dark leading-relaxed">
+                  {review.comment}
+                </p>
               </div>
             ))}
           </div>
@@ -167,61 +292,101 @@ export default function ReviewSection({
 
       {/* Add Review Section */}
       {!isWritingReview ? (
-        <button
-          onClick={() => setIsWritingReview(true)}
-          className="mt-8 bg-accent hover:bg-accent-dark text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm hover:shadow-hover"
-        >
-          Write a Review
-        </button>
+        isLoggedIn && (
+          <button
+            onClick={() => {
+              setIsWritingReview(true);
+              setSubmitMessage(null);
+            }}
+            className="mt-8 bg-accent hover:bg-accent-dark text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-sm hover:shadow-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+          >
+            Write a Review
+          </button>
+        )
       ) : (
-        <form onSubmit={handleReviewSubmit} className="mt-8 space-y-4">
+        <form onSubmit={handleReviewSubmit} className="mt-8 space-y-6">
           <div>
-            <label className="block text-neutral-dark mb-2">Your Rating</label>
-            <div className="flex">
+            <label className="block text-neutral-dark font-medium mb-3">
+              Your Rating *
+            </label>
+            <div className="flex items-center">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
-                  onClick={() => setNewReview({ ...newReview, rating: star })}
-                  className="mr-1"
+                  onClick={() => {
+                    setNewReview({ ...newReview, rating: star });
+                    // Clear error message when user selects rating
+                    if (submitMessage?.type === "error") {
+                      setSubmitMessage(null);
+                    }
+                  }}
+                  className="mr-1 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 rounded"
+                  disabled={isSubmitting}
                 >
                   <Star
-                    className={`w-6 h-6 ${
+                    className={`w-8 h-8 ${
                       star <= newReview.rating
                         ? "fill-accent text-accent"
-                        : "text-secondary"
-                    }`}
+                        : "text-secondary hover:text-accent/50"
+                    } transition-colors`}
                   />
                 </button>
               ))}
+              <span className="ml-2 text-neutral-dark">
+                {newReview.rating} star{newReview.rating !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
+
           <div>
-            <label htmlFor="review" className="block text-neutral-dark mb-2">
-              Your Review
+            <label
+              htmlFor="review"
+              className="block text-neutral-dark font-medium mb-3"
+            >
+              Your Review *
             </label>
             <textarea
               id="review"
               rows={4}
-              className="w-full border border-secondary rounded-lg p-3 focus:ring-accent focus:border-accent"
+              className="w-full border border-secondary rounded-lg p-4 focus:ring-2 focus:ring-accent focus:border-accent transition-colors resize-vertical min-h-[100px]"
               value={newReview.comment}
-              onChange={(e) =>
-                setNewReview({ ...newReview, comment: e.target.value })
-              }
+              onChange={handleCommentChange}
+              placeholder="Share your experience with this product..."
               required
-            ></textarea>
+              disabled={isSubmitting}
+              maxLength={500}
+            />
+            <div
+              className={`text-right text-sm mt-1 ${
+                newReview.comment.length > 450
+                  ? newReview.comment.length > 500
+                    ? "text-red-600"
+                    : "text-orange-600"
+                  : "text-neutral"
+              }`}
+            >
+              {newReview.comment.length}/500
+            </div>
           </div>
+
           <div className="flex space-x-3">
             <button
               type="submit"
-              className="bg-accent hover:bg-accent-dark text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm hover:shadow-hover"
+              disabled={
+                isSubmitting ||
+                !newReview.comment.trim() ||
+                newReview.comment.length > 500
+              }
+              className="bg-accent hover:bg-accent-dark disabled:bg-neutral disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-sm hover:shadow-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
             >
-              Submit Review
+              {isSubmitting ? "Submitting..." : "Submit Review"}
             </button>
             <button
               type="button"
-              onClick={() => setIsWritingReview(false)}
-              className="border border-secondary hover:bg-secondary-light font-medium py-2 px-6 rounded-lg transition-colors"
+              onClick={handleCancelReview}
+              disabled={isSubmitting}
+              className="border border-secondary hover:bg-secondary-light disabled:opacity-50 disabled:cursor-not-allowed font-medium py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2"
             >
               Cancel
             </button>
